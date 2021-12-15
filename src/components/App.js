@@ -11,7 +11,7 @@ function App() {
 
   return (
     <div className="App">
-      <Suspense fallback={<div className='loading'>Loading...</div>}>
+      <Suspense fallback={<div className='loading'><h1>Loading...</h1></div>}>
         {user ? <Main /> : <SignIn />}
       </Suspense>
     </div>

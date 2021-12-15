@@ -1,0 +1,24 @@
+#signin{
+    width: 100vw;
+    height: 100vh;
+    background-color: #f2f2f2;
+}
+
+#signin-topbar{
+    height: 10vh;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: #284bbd;
+    color: white;
+}
+
+#signin-content{
+    width: 100vw;
+    height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}

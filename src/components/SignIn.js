@@ -1,5 +1,8 @@
 import { auth, provider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
+import Button from '@mui/material/Button';
+import GoogleIcon from '@mui/icons-material/Google';
+import '../styles/SignIn.css';
 
 export const SignIn = () => {
 
@@ -9,7 +12,17 @@ export const SignIn = () => {
     }
 
     return (<div id="signin">
-        <h1>Sign In</h1>
-        <button onClick={signIn}>Sign in With Google</button>
+        <div id="signin-topbar">
+            <h2>WhatsZum</h2>
+        </div>
+        <div id="signin-content">
+            <p>Sign in to start chatting</p>
+            <br/>
+            <Button 
+            variant='contained' 
+            startIcon={<GoogleIcon/>} 
+            onClick={signIn}
+            >Sign in</Button>
+        </div>
     </div>)
 }
