@@ -1,7 +1,19 @@
+import { lazy, Suspense } from 'react';
+import { auth } from '../firebase';
+import { useAuthState } from 'react-firebase-hooks/auth';
+
+const SignIn = lazy(() => import('./SignIn').then(module => ({default:module.SignIn})));
+const Main = lazy(() => import('./Main').then(module => ({default:module.Main})));
+
 function App() {
+
+  const [user] = useAuthState(auth);
+
   return (
     <div className="App">
-      <h1>Work In Progress</h1>
+      <Suspense fallback={<div className='loading'>Loading...</div>}>
+        {user ? <Main /> : <SignIn />}
+      </Suspense>
     </div>
   );
 }
