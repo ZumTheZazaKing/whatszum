@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from 'react';
 import { MainContext } from '../contexts/MainContext';
 import { auth, db } from '../firebase';
-import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection } from 'firebase/firestore';
 import Avatar from '@mui/material/Avatar';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -16,16 +16,21 @@ import '../styles/Main.css';
 export const Main = () => {
 
     const [userInfo, setUserInfo] = useState({});
+    const [users, setUsers] = useState([]);
     const { theme, themes, setTheme } = useContext(MainContext);
 
     useEffect(() => {
         let userDoc = doc(db,"users",auth.currentUser.uid);
+        let usersDoc = collection(db,"users");
         onSnapshot(userDoc, snapshot => {
             if(!snapshot.exists()){
                 handleNewUser(userDoc);
             }
             setUserInfo(snapshot.data());
             setTheme(snapshot.data().isDark ? themes.dark : themes.light);
+        })
+        onSnapshot(usersDoc, snapshot => {
+            setUsers(snapshot.docs.filter(d => d.id !== auth.currentUser.uid));
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[]);
@@ -99,7 +104,20 @@ export const Main = () => {
             </Menu>
 
 
-            <div id="main-chats"></div>
+            <div id="main-chats">
+                {users.length ? 
+                users && users.map(user => {
+                    return <div key={user.id} className="main-chat">
+                        <div className="main-chat-avatar">
+                            <Avatar src={user.data().avatar} alt={user.data().name}/>
+                        </div>
+                        <div className="main-chat-name" style={{color:theme.textColor1}}>
+                            {user.data().name}
+                        </div>
+                    </div>
+                })
+                : ""}
+            </div>
 
         </div>
 
