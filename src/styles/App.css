@@ -6,7 +6,15 @@
 }
 
 body {
-  background-color: burlywood;
+  background-color: #f2f2f2;
+}
+body .loading {
+  width: 100vw;
+  height: 100vh;
+  background-color: #f2f2f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /*# sourceMappingURL=App.css.map */
