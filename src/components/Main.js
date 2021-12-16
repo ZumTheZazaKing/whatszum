@@ -87,9 +87,9 @@ export const Main = () => {
             >
                 <MenuItem onClick={switchTheme}>
                     <ListItemIcon>
-                        {userInfo.isDark ? <LightModeIcon fontSize="small"/> : <DarkModeIcon fontSize="small"/>}
+                        {userInfo ? (userInfo.isDark ? <LightModeIcon fontSize="small"/> : <DarkModeIcon fontSize="small"/>) : ""}
                     </ListItemIcon>
-                    {userInfo.isDark ? "Light Mode" : "Dark Mode"}
+                    {userInfo ? (userInfo.isDark ? "Light Mode" : "Dark Mode") : ""}
                 </MenuItem>
                 <MenuItem onClick={signOut}>
                     <ListItemIcon><LogoutIcon fontSize="small"/></ListItemIcon>
