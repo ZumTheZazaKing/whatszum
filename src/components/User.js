@@ -12,7 +12,7 @@ export const User = (props) => {
         <div className="user-avatar">
             <Avatar src={avatar} alt={name}/>
         </div>
-        <div className="user-name" style={{color:theme.textColor1}}>
+        <div className="user-name" style={{color:theme.textColor}}>
                 {name}
         </div>
     </div>)
