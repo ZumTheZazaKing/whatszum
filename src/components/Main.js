@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect, useContext, lazy, Suspense } from 'react';
 import { MainContext } from '../contexts/MainContext';
 import { auth, db } from '../firebase';
 import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection } from 'firebase/firestore';
@@ -12,6 +12,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import '../styles/Main.css';
+
+const User = lazy(() => import('./User').then(module => ({default:module.User})));
 
 export const Main = () => {
 
@@ -105,18 +107,11 @@ export const Main = () => {
 
 
             <div id="main-chats">
-                {users.length ? 
-                users && users.map(user => {
-                    return <div key={user.id} className="main-chat">
-                        <div className="main-chat-avatar">
-                            <Avatar src={user.data().avatar} alt={user.data().name}/>
-                        </div>
-                        <div className="main-chat-name" style={{color:theme.textColor1}}>
-                            {user.data().name}
-                        </div>
-                    </div>
-                })
-                : ""}
+                <Suspense fallback={<div>Loading...</div>}>
+                    {users.length ? users && users.map(user => {
+                        return (<User key={user.id} info={user.data()}/>)
+                    }) : ""}
+                </Suspense>
             </div>
 
         </div>

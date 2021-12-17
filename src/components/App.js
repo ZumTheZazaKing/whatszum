@@ -19,7 +19,7 @@ function App() {
       backgroundColor1: '#212121',
       backgroundColor2: '#303030',
       backgroundColor3: '#1a1a1a',
-      textColor1: '#fff',
+      textColor: '#fff',
       textColor2: 'grey'
     }
   }
