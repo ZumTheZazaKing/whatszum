@@ -1,0 +1,46 @@
+#main-chat-interface-header{
+    height: 10vh;
+    display: flex;
+    padding: 10px;
+}
+
+#main-chat-interface-header-content{
+    display: flex;
+    align-items: center;
+}
+
+#main-chat-interface-header-content p{
+    margin-left: 10px;
+}
+
+#main-chat-interface-body{
+    width: 100%;
+    height: 80vh;
+}
+
+#main-chat-interface-footer{
+    width: 100%;
+    height: 10vh;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+}
+
+#main-chat-interface-footer form{
+    width: 100%;
+}
+
+#main-chat-interface-input{
+    width: 90%;
+    height: 80%;
+    border: none;
+    outline: none;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 50px;
+}
+
+#main-chat-interface-send{
+    width: 10%;
+
+}

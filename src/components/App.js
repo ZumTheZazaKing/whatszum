@@ -10,7 +10,7 @@ function App() {
 
   const themes = {
     light: {
-      backgroundColor1: '#fff',
+      backgroundColor1: '#fafafa',
       backgroundColor2: '#f2f2f2',
       backgroundColor3: '#284bbd',
       textColor: '#000'

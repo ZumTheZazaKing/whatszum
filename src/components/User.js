@@ -8,7 +8,7 @@ export const User = (props) => {
     const { avatar, name } = props.info;
     const { theme } = useContext(MainContext);
 
-    return (<div className="user">
+    return (<div className="user" id={props.id} onClick={props.handleUserClick}>
         <div className="user-avatar">
             <Avatar src={avatar} alt={name}/>
         </div>
