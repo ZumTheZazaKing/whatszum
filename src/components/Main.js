@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, lazy, Suspense } from 'react';
+import { useState, useEffect, useContext, useRef, lazy, Suspense } from 'react';
 import { MainContext } from '../contexts/MainContext';
 import { auth, db } from '../firebase';
 import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion } from 'firebase/firestore';
@@ -12,6 +12,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import { toast } from 'react-toastify';
 import '../styles/Main.css';
 import '../styles/ChatInterface.css';
 
@@ -25,6 +26,7 @@ export const Main = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
     const { theme, themes, setTheme } = useContext(MainContext);
+    const dummy = useRef();
 
     useEffect(() => {
         let userDoc = doc(db,"users",auth.currentUser.uid);
@@ -41,6 +43,11 @@ export const Main = () => {
         })
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[]);
+
+    //Auto scroll to new messages
+    useEffect(() => {
+        dummy.current.scrollIntoView({behavior: 'smooth'});
+    })
 
     const handleNewUser = async userDoc => {
         const userPayload = {
@@ -80,9 +87,9 @@ export const Main = () => {
             setSelectedUser({...snapshot.data(), id:snapshot.id});
         })
 
-        onSnapshot(doc(db,"chats",ref1), snapshot1 => {
+        onSnapshot(doc(db,"chats",ref1), async snapshot1 => {
             if(snapshot1.exists()){
-                return setChatMessages([...snapshot1.data().messages]);
+                setChatMessages([...snapshot1.data().messages])
             } else { 
                 onSnapshot(doc(db,"chats",ref2), snapshot2 => {
                     if(snapshot2.exists()){
@@ -95,13 +102,13 @@ export const Main = () => {
                     
                 })
             }   
-        });
+        })
     }
 
     const handleSendMessage = e => {
         e.preventDefault();
 
-        if(!e.target.message.value)return console.log("No message");
+        if(!e.target.message.value)return toast.error("Message cannot be empty");
         const currentTime = new Date().toUTCString();
 
         const ref1 = `${auth.currentUser.uid}[AND]${selectedUser.id}`;
@@ -111,17 +118,16 @@ export const Main = () => {
             body: e.target.message.value,
             sentAt: currentTime,
             sender: auth.currentUser.uid
-        })}).then(() => {e.target.message.value = "";})
+        })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
         .catch(error => {
             updateDoc(doc(db,"chats",ref2), {messages:arrayUnion({
                 body: e.target.message.value,
                 sentAt: currentTime,
                 sender: auth.currentUser.uid
-            })}).then(() => {e.target.message.value = "";})
+            })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
             .catch(err => console.log("Error sending message", err));
 
         })
-
     }
 
     return (<div id="main" style={{backgroundColor:theme.backgroundColor2}}>
@@ -190,17 +196,18 @@ export const Main = () => {
             <div id="main-chat-interface-body">
                 <Suspense fallback={<div>Loading...</div>}>
                     {chatMessages ? (chatMessages.length ? chatMessages.map((message,i) => {
-                        return <Message key={i} info={message}/>
+                        return <Message isDark={userInfo.isDark} key={i} info={message}/>
                     }) 
                     : <div className="loading chats" style={{backgroundColor:theme.backgroundColor2, color:theme.textColor}}>Start a conversation</div>)
                     : <div className="loading chats" style={{backgroundColor:theme.backgroundColor2, color:theme.textColor}}>Select a user to chat with</div>}
                 </Suspense>
+                <div ref={dummy}></div>
             </div>
 
             {selectedUser ? 
             <div id="main-chat-interface-footer" style={{backgroundColor:theme.backgroundColor3}}>
                 <form onSubmit={e => handleSendMessage(e)}>
-                    <input name="message" id="main-chat-interface-input" type="text"/>
+                    <input autoComplete='off' maxLength={700} name="message" id="main-chat-interface-input" type="text"/>
                     <IconButton type='submit' id="main-chat-interface-send">
                         <SendIcon sx={{color:"white"}} fontSize="large"/>
                     </IconButton>
