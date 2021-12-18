@@ -13,6 +13,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { toast } from 'react-toastify';
 import '../styles/Main.css';
 import '../styles/ChatInterface.css';
@@ -102,7 +103,6 @@ export const Main = () => {
                     if(snapshot2.exists()){
                         return setChatMessages([...snapshot2.data().messages]);
                     } else {
-                        console.log("Conversation not started");
                         setDoc(doc(db,"chats",ref1), {messages:[]});
                         setChatMessages([]);
                     }
@@ -162,6 +162,12 @@ export const Main = () => {
                     horizontal: 'right',
                 }}
             >
+                <MenuItem>
+                    <ListItemIcon>
+                        <AccountBoxIcon fontSize="small"/>
+                    </ListItemIcon>
+                    Edit Profile
+                </MenuItem>
                 <MenuItem onClick={switchTheme}>
                     <ListItemIcon>
                         {userInfo ? (userInfo.isDark ? <LightModeIcon fontSize="small"/> : <DarkModeIcon fontSize="small"/>) : ""}
