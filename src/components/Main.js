@@ -36,6 +36,7 @@ export const Main = () => {
         onSnapshot(userDoc, snapshot => {
             if(!snapshot.exists()){
                 handleNewUser(userDoc);
+                return setUserInfo(snapshot.data());
             }
             setUserInfo(snapshot.data());
             setTheme(snapshot.data().isDark ? themes.dark : themes.light);
