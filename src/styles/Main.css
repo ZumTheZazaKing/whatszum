@@ -23,6 +23,10 @@
     height: 100vh;
 }
 
-@media only screen and (max-width: 900px) {
-    
+@media only screen and (max-width: 600px) {
+    #main-sidebar{
+        width: 100vw;
+        position: fixed;
+        z-index: 1;
+    }
 }

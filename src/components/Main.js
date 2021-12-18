@@ -12,6 +12,7 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import { toast } from 'react-toastify';
 import '../styles/Main.css';
 import '../styles/ChatInterface.css';
@@ -27,6 +28,7 @@ export const Main = () => {
     const [chatMessages, setChatMessages] = useState([]);
     const { theme, themes, setTheme } = useContext(MainContext);
     const dummy = useRef();
+    const sidebarDisplay = useRef();
 
     useEffect(() => {
         let userDoc = doc(db,"users",auth.currentUser.uid);
@@ -83,6 +85,10 @@ export const Main = () => {
         const ref1 = `${auth.currentUser.uid}[AND]${e.currentTarget.id}`;
         const ref2 = `${e.currentTarget.id}[AND]${auth.currentUser.uid}`;
 
+        if(window.innerWidth < 600){
+            sidebarDisplay.current.style.display = "none";
+        }
+
         onSnapshot(doc(db,"users",e.currentTarget.id), snapshot => {
             setSelectedUser({...snapshot.data(), id:snapshot.id});
         })
@@ -131,7 +137,7 @@ export const Main = () => {
     }
 
     return (<div id="main" style={{backgroundColor:theme.backgroundColor2}}>
-        <div id="main-sidebar" style={{backgroundColor:theme.backgroundColor1}}>
+        <div ref={sidebarDisplay} id="main-sidebar" style={{backgroundColor:theme.backgroundColor1}}>
             <div id='main-topbar' style={{backgroundColor:theme.backgroundColor3}}>
                 <Avatar src={userInfo ? userInfo.avatar : ""} alt={userInfo ? userInfo.name : ""}/>
                 <IconButton onClick={menuHandleClick}>
@@ -185,6 +191,11 @@ export const Main = () => {
 
         <div id="main-chat-interface">
             <div id="main-chat-interface-header" style={{backgroundColor:theme.backgroundColor1}}>
+                {window.innerWidth < 600 ? 
+                <IconButton onClick={() => sidebarDisplay.current.style.display = "block"}>
+                    <ArrowBackIosNewIcon sx={{color:theme.textColor}}/>
+                </IconButton> 
+                : ""}
                 { selectedUser ? 
                 <div id="main-chat-interface-header-content">
                     <Avatar src={selectedUser.avatar} alt={selectedUser.name}/>
@@ -209,7 +220,7 @@ export const Main = () => {
                 <form onSubmit={e => handleSendMessage(e)}>
                     <input autoComplete='off' maxLength={700} name="message" id="main-chat-interface-input" type="text"/>
                     <IconButton type='submit' id="main-chat-interface-send">
-                        <SendIcon sx={{color:"white"}} fontSize="large"/>
+                        <SendIcon sx={{color:"white"}}/>
                     </IconButton>
                 </form>
             </div>
