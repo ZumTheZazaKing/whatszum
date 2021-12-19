@@ -3,6 +3,7 @@ import { MainContext } from '../contexts/MainContext';
 import { auth, db } from '../firebase';
 import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion } from 'firebase/firestore';
 import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import SendIcon from '@mui/icons-material/Send';
@@ -14,6 +15,11 @@ import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import TextField from '@mui/material/TextField';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
 import { toast } from 'react-toastify';
 import '../styles/Main.css';
 import '../styles/ChatInterface.css';
@@ -112,6 +118,27 @@ export const Main = () => {
         })
     }
 
+    const [editOpen, setEditOpen] = useState(false);
+    const handleEditOpen = () => {
+        setEditOpen(true);
+        menuHandleClose();
+    };
+    const handleEditClose = () => {
+        setEditOpen(false);
+    };
+
+    const editProfile = async e => {
+        e.preventDefault();
+        if(!e.target.username.value)return toast.error("Please enter a username");
+
+        await updateDoc(doc(db,"users",auth.currentUser.uid), {
+            name:e.target.username.value
+        }).then(() => {toast.success("Profile updated successfully")})
+        .catch(() => {toast.error("Profile update failed")});
+
+        handleEditClose();
+    }
+
     const handleSendMessage = e => {
         e.preventDefault();
 
@@ -162,7 +189,7 @@ export const Main = () => {
                     horizontal: 'right',
                 }}
             >
-                <MenuItem>
+                <MenuItem onClick={handleEditOpen}>
                     <ListItemIcon>
                         <AccountBoxIcon fontSize="small"/>
                     </ListItemIcon>
@@ -178,8 +205,29 @@ export const Main = () => {
                     <ListItemIcon><LogoutIcon fontSize="small"/></ListItemIcon>
                     Logout
                 </MenuItem>
-                
             </Menu>
+
+            <Dialog open={editOpen} onClose={handleEditClose}>
+                <DialogTitle>Edit Profile</DialogTitle>
+                <form onSubmit={editProfile}>
+                    <DialogContent>
+                        <TextField
+                            margin="dense"
+                            id="name"
+                            label="Username"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            name='username'
+                            defaultValue={userInfo ? userInfo.name : ""}
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={handleEditClose}>Cancel</Button>
+                        <Button type="submit" variant='contained'>Edit</Button>
+                    </DialogActions>
+                </form>
+      </Dialog>
 
 
             <div id="main-chats">
@@ -227,7 +275,7 @@ export const Main = () => {
                 <form onSubmit={e => handleSendMessage(e)}>
                     <input autoComplete='off' maxLength={700} name="message" id="main-chat-interface-input" type="text"/>
                     <IconButton type='submit' id="main-chat-interface-send">
-                        <SendIcon sx={{color:"white"}}/>
+                        <SendIcon fontSize="large" sx={{color:"white"}}/>
                     </IconButton>
                 </form>
             </div>
