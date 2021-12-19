@@ -150,7 +150,8 @@ export const Main = () => {
 
         await updateDoc(doc(db,"users",auth.currentUser.uid), {
             name:e.target.username.value,
-            avatar:editProfileImage
+            avatar:editProfileImage,
+            description:e.target.description.value || "No description yet"
         }).then(() => {toast.success("Profile updated successfully")})
         .catch(() => {toast.error("Profile update failed")});
 
@@ -258,6 +259,20 @@ export const Main = () => {
                             variant="standard"
                             name='username'
                             defaultValue={userInfo ? userInfo.name : ""}
+                            inputProps={{maxLength:20}}
+                            autoComplete='off'
+                        />
+                        <TextField
+                            margin="dense"
+                            id="name"
+                            label="Description"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            name='description'
+                            defaultValue={userInfo ? userInfo.description : ""}
+                            inputProps={{maxLength:100}}
+                            autoComplete='off'
                         />
                     </DialogContent>
                     <DialogActions>
