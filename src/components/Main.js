@@ -115,11 +115,11 @@ export const Main = () => {
 
         onSnapshot(doc(db,"chats",ref1), async snapshot1 => {
             if(snapshot1.exists()){
-                setChatMessages([...snapshot1.data().messages])
+                setChatMessages([...snapshot1.data().messages.slice(-20, )])
             } else { 
                 onSnapshot(doc(db,"chats",ref2), snapshot2 => {
                     if(snapshot2.exists()){
-                        return setChatMessages([...snapshot2.data().messages]);
+                        return setChatMessages([...snapshot2.data().messages.slice(-20, )]);
                     } else {
                         setDoc(doc(db,"chats",ref1), {messages:[]});
                         setChatMessages([]);
@@ -268,6 +268,20 @@ export const Main = () => {
                 && d.id !== auth.currentUser.uid
             ));
         })
+    }
+
+    //Function to view older messages
+    const viewOlderMessages = () => {
+        const ref1 = `${auth.currentUser.uid}[AND]${selectedUser.id}`;
+        const ref2 = `${selectedUser.id}[AND]${auth.currentUser.uid}`;
+
+        onSnapshot(doc(db,"chats",ref1), snapshot1 => {
+            if(snapshot1.exists()){
+                const indexForExpansion = snapshot1.data().messages.findIndex(message => message.id === chatMessages[0].id);
+                console.log(indexForExpansion);
+            }
+        })
+
     }
 
 
@@ -451,7 +465,9 @@ export const Main = () => {
                 : ""}
             </div>
 
+
             <div className="main-chat-interface-body">
+                {chatMessages.length ? <Button onClick={() => viewOlderMessages()}>View Older Messages</Button> : ""}
                 <Suspense fallback={<div style={{color:theme.textColor}}><h3>Loading...</h3></div>}>
                     {chatMessages ? (chatMessages.length ? chatMessages.map((message,i) => {
                         return <Message openContextMenu={openContextMenu} isDark={userInfo.isDark} key={i} info={message}/>

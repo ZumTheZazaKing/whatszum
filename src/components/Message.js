@@ -16,7 +16,7 @@ export const Message = (props) => {
         <p>
             {body}
             <span style={!props.isDark && sender !== auth.currentUser.uid ? {color:"black"} : {}}>
-                {`${moment(sentAt).hours()}:${moment(sentAt).minutes()}`}
+                {`${moment(sentAt).hours()}:${moment(sentAt).minutes() < 10 ? '0' + moment(sentAt).minutes() : moment(sentAt).minutes()}`}
             </span>
         </p>
         
