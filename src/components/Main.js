@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, useRef, lazy, Suspense } from 'react';
 import { MainContext } from '../contexts/MainContext';
-import { auth, db } from '../firebase';
+import { auth, db, storage } from '../firebase';
+import { uploadBytes, ref, getDownloadURL } from 'firebase/storage';
 import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion } from 'firebase/firestore';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
@@ -33,6 +34,7 @@ export const Main = () => {
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [chatMessages, setChatMessages] = useState([]);
+    const [editProfileImage, setEditProfileImage] = useState("");
     const { theme, themes, setTheme } = useContext(MainContext);
     const dummy = useRef();
     const sidebarDisplay = useRef();
@@ -46,6 +48,7 @@ export const Main = () => {
                 return setUserInfo(snapshot.data());
             }
             setUserInfo(snapshot.data());
+            setEditProfileImage(snapshot.data().avatar);
             setTheme(snapshot.data().isDark ? themes.dark : themes.light);
         })
         onSnapshot(usersDoc, snapshot => {
@@ -125,14 +128,29 @@ export const Main = () => {
     };
     const handleEditClose = () => {
         setEditOpen(false);
+        setEditProfileImage(userInfo.avatar);
     };
+
+    const imageUpload = async(e) => {
+        if(!e.target.files[0])return;
+
+        const storageRef = ref(storage,`/${auth.currentUser.uid}Images/${e.target.files[0].name}`);
+
+        await uploadBytes(storageRef, e.target.files[0])
+        .catch(() => toast.error("Unable to retrieve image"));
+
+        await getDownloadURL(ref(storage,`/${auth.currentUser.uid}Images/${e.target.files[0].name}`))
+        .then(url => {setEditProfileImage(url);})
+        .catch(() => toast.error("Unable to get image reference"));
+    }
 
     const editProfile = async e => {
         e.preventDefault();
         if(!e.target.username.value)return toast.error("Please enter a username");
 
         await updateDoc(doc(db,"users",auth.currentUser.uid), {
-            name:e.target.username.value
+            name:e.target.username.value,
+            avatar:editProfileImage
         }).then(() => {toast.success("Profile updated successfully")})
         .catch(() => {toast.error("Profile update failed")});
 
@@ -210,7 +228,27 @@ export const Main = () => {
             <Dialog open={editOpen} onClose={handleEditClose}>
                 <DialogTitle>Edit Profile</DialogTitle>
                 <form onSubmit={editProfile}>
-                    <DialogContent>
+                    <DialogContent sx={{
+                        display:"flex", 
+                        flexDirection:"column",
+                        alignItems:"center",
+                        justifyContent:"center"}}
+                    >
+                        <TextField name='image' 
+                            type="file" 
+                            id="editImageInput" 
+                            sx={{display:"none"}}
+                            accept="image/*"
+                            onChange={e => imageUpload(e)}
+                        />
+                        <label htmlFor='editImageInput'>
+                            <Avatar
+                                sx={{width:50, height:50}}
+                                src={editProfileImage} 
+                                alt="Z"
+                            />
+                        </label>
+                        <br/>
                         <TextField
                             margin="dense"
                             id="name"
