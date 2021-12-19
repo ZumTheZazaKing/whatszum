@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef, lazy, Suspense } from 'react';
 import { MainContext } from '../contexts/MainContext';
 import { auth, db, storage } from '../firebase';
 import { uploadBytes, ref, getDownloadURL } from 'firebase/storage';
-import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion } from 'firebase/firestore';
+import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -21,7 +21,12 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import DialogContentText from '@mui/material/DialogContentText';
 import { toast } from 'react-toastify';
+import { CopyToClipboard } from 'react-copy-to-clipboard';
+import uniqid from 'uniqid';
 import '../styles/Main.css';
 import '../styles/ChatInterface.css';
 
@@ -33,6 +38,8 @@ export const Main = () => {
     const [userInfo, setUserInfo] = useState({});
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedMessageId, setSelectedMessageId] = useState(null);
+    const [selectedMessageText, setSelectedMessageText] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
     const [editProfileImage, setEditProfileImage] = useState("");
     const { theme, themes, setTheme } = useContext(MainContext);
@@ -131,6 +138,7 @@ export const Main = () => {
         setEditProfileImage(userInfo.avatar);
     };
 
+    //function to upload image to use for editing profile
     const imageUpload = async(e) => {
         if(!e.target.files[0])return;
 
@@ -144,6 +152,7 @@ export const Main = () => {
         .catch(() => toast.error("Unable to get image reference"));
     }
 
+    //Function to edit profile
     const editProfile = async e => {
         e.preventDefault();
         if(!e.target.username.value)return toast.error("Please enter a username");
@@ -158,6 +167,7 @@ export const Main = () => {
         handleEditClose();
     }
 
+    //Function to send message
     const handleSendMessage = e => {
         e.preventDefault();
 
@@ -170,18 +180,78 @@ export const Main = () => {
         updateDoc(doc(db,"chats",ref1), {messages:arrayUnion({
             body: e.target.message.value,
             sentAt: currentTime,
-            sender: auth.currentUser.uid
+            sender: auth.currentUser.uid,
+            id:uniqid()
         })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
         .catch(error => {
             updateDoc(doc(db,"chats",ref2), {messages:arrayUnion({
                 body: e.target.message.value,
                 sentAt: currentTime,
-                sender: auth.currentUser.uid
+                sender: auth.currentUser.uid,
+                id:uniqid()
             })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
             .catch(err => console.log("Error sending message", err));
 
         })
     }
+
+    //Function to handle context menu
+    const [contextMenu, setContextMenu] = useState(null);
+    const openContextMenu = (e) => {
+
+        if(!e.target.parentNode.id)return;
+        setSelectedMessageId(e.target.parentNode.id);
+        const spanIndex = e.target.innerHTML.indexOf("<span>");
+        setSelectedMessageText(e.target.innerHTML.substr(0,spanIndex));
+
+        e.preventDefault();
+        setContextMenu(
+            contextMenu === null
+            ? {
+                mouseX: e.clientX - 2,
+                mouseY: e.clientY - 4,
+            }
+            : null,
+        );
+    };
+    const handleContextClose = () => {
+        setContextMenu(null);
+    };
+
+
+    //Delete popup and delete function
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const handleDeleteOpen = () => {
+        setDeleteOpen(true);
+        handleContextClose();
+    };
+    const handleDeleteClose = () => {
+        setDeleteOpen(false);
+    };
+    const handleDeleteYes = (e) => {
+        handleDeleteClose();
+
+        const ref1 = `${auth.currentUser.uid}[AND]${selectedUser.id}`;
+        const ref2 = `${selectedUser.id}[AND]${auth.currentUser.uid}`;
+        
+        const [victimObject] = chatMessages.filter(message => message.id === selectedMessageId);
+        onSnapshot(doc(db,"chats",ref1), snapshot1 => {
+            if(snapshot1.exists()){
+                updateDoc(doc(db,"chats",ref1), {messages:arrayRemove(victimObject)})
+                .then(() => {toast.success("Message deleted successfully")})
+                .catch(() => {toast.error("Message deletion failed")});
+            } else {
+                updateDoc(doc(db,"chats",ref2), {messages:arrayRemove(victimObject)})
+                .then(() => {toast.success("Message deleted successfully")})
+                .catch(() => {toast.error("Message deletion failed")});
+            }
+        })
+
+    }
+
+    //Function to handle message copy
+
+
 
     return (<div id="main" style={{backgroundColor:theme.backgroundColor2}}>
         <div ref={sidebarDisplay} id="main-sidebar" style={{backgroundColor:theme.backgroundColor1}}>
@@ -280,7 +350,36 @@ export const Main = () => {
                         <Button type="submit" variant='contained'>Edit</Button>
                     </DialogActions>
                 </form>
-      </Dialog>
+            </Dialog>
+            <Menu
+                open={contextMenu !== null}
+                onClose={handleContextClose}
+                anchorReference="anchorPosition"
+                anchorPosition={
+                    contextMenu !== null
+                    ? { top: contextMenu.mouseY, left: contextMenu.mouseX }
+                    : undefined
+                }
+                anchorOrigin={{
+                    vertical: 'center',
+                    horizontal: 'left',
+                }}
+                transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'right',
+                }}
+            >
+                <CopyToClipboard text={selectedMessageText} onCopy={() => toast.success("Message copied")}>
+                    <MenuItem onClick={handleContextClose}>
+                        <ListItemIcon><ContentCopyIcon/></ListItemIcon>
+                        Copy
+                    </MenuItem>
+                </CopyToClipboard>
+                <MenuItem sx={{color:"crimson"}} onClick={handleDeleteOpen}>
+                    <ListItemIcon><DeleteIcon sx={{color:"crimson"}}/></ListItemIcon>
+                    Delete
+                </MenuItem>
+            </Menu>
 
 
             <div id="main-chats">
@@ -312,16 +411,35 @@ export const Main = () => {
                 : ""}
             </div>
 
-            <div id="main-chat-interface-body">
+            <div className="main-chat-interface-body">
                 <Suspense fallback={<div>Loading...</div>}>
                     {chatMessages ? (chatMessages.length ? chatMessages.map((message,i) => {
-                        return <Message isDark={userInfo.isDark} key={i} info={message}/>
+                        return <Message openContextMenu={openContextMenu} isDark={userInfo.isDark} key={i} info={message}/>
                     }) 
                     : <div className="loading chats" style={{backgroundColor:theme.backgroundColor2, color:theme.textColor}}>Start a conversation</div>)
                     : <div className="loading chats" style={{backgroundColor:theme.backgroundColor2, color:theme.textColor}}>Select a user to chat with</div>}
                 </Suspense>
                 <div ref={dummy}></div>
             </div>
+            <Dialog
+                open={deleteOpen}
+                onClose={handleDeleteClose}
+            >
+                <DialogTitle>
+                    Are you sure?
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Message will be deleted permanently for all users.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleDeleteClose}>No</Button>
+                    <Button variant="contained" onClick={handleDeleteYes} autoFocus>
+                        Yes
+                    </Button>
+                </DialogActions>
+            </Dialog>
 
             {selectedUser ? 
             <div id="main-chat-interface-footer" style={{backgroundColor:theme.backgroundColor3}}>

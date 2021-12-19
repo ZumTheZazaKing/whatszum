@@ -5,10 +5,13 @@ import moment from 'moment';
 
 export const Message = (props) => {
 
-    const { body, sender, sentAt } = props.info;
+    const { body, sender, sentAt, id } = props.info;
     const { theme } = useContext(MainContext);
 
-    return <div className={`message ${sender === auth.currentUser.uid ? 'sent' : ''}`}
+    return <div
+    id={id}
+    className={`message ${sender === auth.currentUser.uid ? 'sent' : ''}`}
+    onContextMenu={auth.currentUser.uid === sender ? props.openContextMenu : () => {return}}
     style={sender === auth.currentUser.uid ? {} : {backgroundColor:theme.backgroundColor1, color:theme.textColor}}>
         <p>
             {body}
