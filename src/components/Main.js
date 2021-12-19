@@ -24,6 +24,8 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DialogContentText from '@mui/material/DialogContentText';
+import InputAdornment from '@mui/material/InputAdornment';
+import SearchIcon from '@mui/icons-material/Search';
 import { toast } from 'react-toastify';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import uniqid from 'uniqid';
@@ -249,7 +251,24 @@ export const Main = () => {
 
     }
 
-    //Function to handle message copy
+    //Function to handle search
+    const search = e => {
+        e.preventDefault();
+
+        if(!e.target.searchQuery.value){
+            onSnapshot(collection(db,"users"), snapshot => {
+                setUsers(snapshot.docs.filter(d => d.id !== auth.currentUser.uid));
+            })
+            return;
+        }
+
+        onSnapshot(collection(db,"users"), snapshot => {
+            setUsers(snapshot.docs.filter(d => 
+                d.data().name.toLowerCase().includes(e.target.searchQuery.value.toLowerCase()) 
+                && d.id !== auth.currentUser.uid
+            ));
+        })
+    }
 
 
 
@@ -384,13 +403,34 @@ export const Main = () => {
 
             <div id="main-chats">
                 <Suspense fallback={<div style={{color:theme.textColor}}><h3>Loading...</h3></div>}>
+                    <form onSubmit={e => search(e)}>
+                        <TextField
+                            margin="dense"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            name='searchQuery'
+                            inputProps={{maxLength:20}}
+                            autoComplete='off'
+                            sx={{input:{color:theme.textColor, padding:"10px"}}}
+                            InputProps={{
+                                startAdornment: (
+                                    <InputAdornment position="start">
+                                        <IconButton type="submit">
+                                            <SearchIcon sx={{color:theme.textColor}} />
+                                        </IconButton>
+                                    </InputAdornment>
+                                )
+                            }}
+                        />
+                    </form>
                     {users.length ? users && users.map((user,i) => {
                         return (
                         <User handleUserClick={handleUserClick} 
                             key={i} id={user.id} 
                             info={user.data()}/>
                         )
-                    }) : ""}
+                    }) : <div id="no-results"><h3 style={{color:theme.textColor}}>¯\_(ツ)_/¯</h3></div>}
                 </Suspense>
             </div>
 
