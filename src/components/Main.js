@@ -383,7 +383,7 @@ export const Main = () => {
 
 
             <div id="main-chats">
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<div style={{color:theme.textColor}}><h3>Loading...</h3></div>}>
                     {users.length ? users && users.map((user,i) => {
                         return (
                         <User handleUserClick={handleUserClick} 
@@ -412,7 +412,7 @@ export const Main = () => {
             </div>
 
             <div className="main-chat-interface-body">
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={<div style={{color:theme.textColor}}><h3>Loading...</h3></div>}>
                     {chatMessages ? (chatMessages.length ? chatMessages.map((message,i) => {
                         return <Message openContextMenu={openContextMenu} isDark={userInfo.isDark} key={i} info={message}/>
                     }) 
