@@ -44,8 +44,10 @@ export const Main = () => {
     const [selectedMessageText, setSelectedMessageText] = useState('');
     const [chatMessages, setChatMessages] = useState([]);
     const [editProfileImage, setEditProfileImage] = useState("");
+    const [viewOlderMsg, setViewOlderMsg] = useState(true);
     const { theme, themes, setTheme } = useContext(MainContext);
     const dummy = useRef();
+    const topDummy = useRef();
     const sidebarDisplay = useRef();
 
     useEffect(() => {
@@ -69,7 +71,7 @@ export const Main = () => {
     //Auto scroll to new messages
     useEffect(() => {
         dummy.current.scrollIntoView({behavior: 'smooth'});
-    })
+    });
 
     const handleNewUser = async userDoc => {
         const userPayload = {
@@ -199,25 +201,6 @@ export const Main = () => {
                 .catch(err => console.log("Error sending message", err));
             }
         }).catch(err => console.log("Error sending message"));
-    
-            
-
-        /*updateDoc(doc(db,"chats",ref1), {messages:arrayUnion({
-            body: e.target.message.value,
-            sentAt: currentTime,
-            sender: auth.currentUser.uid,
-            id:uniqid()
-        })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
-        .catch(error => {
-            updateDoc(doc(db,"chats",ref2), {messages:arrayUnion({
-                body: e.target.message.value,
-                sentAt: currentTime,
-                sender: auth.currentUser.uid,
-                id:uniqid()
-            })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
-            .catch(err => console.log("Error sending message", err));
-
-        })*/
     }
 
     //Function to handle context menu
@@ -298,10 +281,37 @@ export const Main = () => {
         const ref1 = `${auth.currentUser.uid}[AND]${selectedUser.id}`;
         const ref2 = `${selectedUser.id}[AND]${auth.currentUser.uid}`;
 
-        onSnapshot(doc(db,"chats",ref1), snapshot1 => {
+        setTimeout(() => {topDummy.current.scrollIntoView({behavior: 'smooth'})}, 100);
+
+        getDoc(doc(db,"chats",ref1))
+        .then(snapshot1 => {
             if(snapshot1.exists()){
                 const indexForExpansion = snapshot1.data().messages.findIndex(message => message.id === chatMessages[0].id);
-                console.log(indexForExpansion);
+                const hiddenMessages = snapshot1.data().messages.slice(0,indexForExpansion);
+                let messagesToAdd;
+
+                if(hiddenMessages.length >= 20){
+                    messagesToAdd = snapshot1.data().messages.slice(indexForExpansion-20, indexForExpansion)
+                } else {
+                    messagesToAdd = snapshot1.data().messages.slice(indexForExpansion-hiddenMessages.length, indexForExpansion)
+                }
+                if(messagesToAdd.length === 0)return setViewOlderMsg(false);
+                setChatMessages([...messagesToAdd, ...chatMessages]);
+            } else {
+                getDoc(doc(db,"chats",ref2))
+                .then(snapshot2 => {
+                    const indexForExpansion = snapshot2.data().messages.findIndex(message => message.id === chatMessages[0].id);
+                    const hiddenMessages = snapshot2.data().messages.slice(0,indexForExpansion);
+                    let messagesToAdd;
+
+                    if(hiddenMessages.length >= 20){
+                        messagesToAdd = snapshot2.data().messages.slice(indexForExpansion-20, indexForExpansion)
+                    } else {
+                        messagesToAdd = snapshot2.data().messages.slice(indexForExpansion-hiddenMessages.length, indexForExpansion)
+                    }
+                    if(messagesToAdd.length === 0)return setViewOlderMsg(false);
+                    setChatMessages([...messagesToAdd, ...chatMessages]);
+                })
             }
         })
 
@@ -490,7 +500,12 @@ export const Main = () => {
 
 
             <div className="main-chat-interface-body">
-                {chatMessages.length ? <Button onClick={() => viewOlderMessages()}>View Older Messages</Button> : ""}
+                <div ref={topDummy}></div>
+                {chatMessages.length ? (
+                viewOlderMsg ? 
+                <Button onClick={() => viewOlderMessages()}>View Older Messages</Button> 
+                : <h3 style={{color:theme.textColor}}>Beginning of conversation reached</h3>) 
+                : ""}
                 <Suspense fallback={<div style={{color:theme.textColor}}><h3>Loading...</h3></div>}>
                     {chatMessages ? (chatMessages.length ? chatMessages.map((message,i) => {
                         return <Message openContextMenu={openContextMenu} isDark={userInfo.isDark} key={i} info={message}/>
