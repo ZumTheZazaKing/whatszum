@@ -2,7 +2,7 @@ import { useState, useEffect, useContext, useRef, lazy, Suspense } from 'react';
 import { MainContext } from '../contexts/MainContext';
 import { auth, db, storage } from '../firebase';
 import { uploadBytes, ref, getDownloadURL } from 'firebase/storage';
-import { onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getDoc, onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -179,7 +179,30 @@ export const Main = () => {
         const ref1 = `${auth.currentUser.uid}[AND]${selectedUser.id}`;
         const ref2 = `${selectedUser.id}[AND]${auth.currentUser.uid}`;
 
-        updateDoc(doc(db,"chats",ref1), {messages:arrayUnion({
+        getDoc(doc(db,"chats",ref1))
+        .then(snapshot => {
+            if(snapshot.exists()){
+                updateDoc(doc(db,"chats",ref1), {messages:arrayUnion({
+                    body: e.target.message.value,
+                    sentAt: currentTime,
+                    sender: auth.currentUser.uid,
+                    id:uniqid()
+                })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
+                .catch(err => console.log("Error sending message", err));
+            } else {
+                updateDoc(doc(db,"chats",ref2), {messages:arrayUnion({
+                    body: e.target.message.value,
+                    sentAt: currentTime,
+                    sender: auth.currentUser.uid,
+                    id:uniqid()
+                })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
+                .catch(err => console.log("Error sending message", err));
+            }
+        }).catch(err => console.log("Error sending message"));
+    
+            
+
+        /*updateDoc(doc(db,"chats",ref1), {messages:arrayUnion({
             body: e.target.message.value,
             sentAt: currentTime,
             sender: auth.currentUser.uid,
@@ -194,7 +217,7 @@ export const Main = () => {
             })}).then(() => {e.target.message.value = "";dummy.current.scrollIntoView({behavior: 'smooth'});})
             .catch(err => console.log("Error sending message", err));
 
-        })
+        })*/
     }
 
     //Function to handle context menu
