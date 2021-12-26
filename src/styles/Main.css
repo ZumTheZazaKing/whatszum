@@ -11,6 +11,15 @@
     text-align: center;
 }
 
+#main #load-users{
+    text-align: center;
+}
+
+#main-chats{
+    height: 90vh;
+    overflow-y: auto;
+}
+
 #main-sidebar{
     width: 400px;
     height: 100vh;

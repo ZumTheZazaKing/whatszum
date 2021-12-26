@@ -2,7 +2,10 @@ import { useState, useEffect, useContext, useRef, lazy, Suspense } from 'react';
 import { MainContext } from '../contexts/MainContext';
 import { auth, db, storage } from '../firebase';
 import { uploadBytes, ref, getDownloadURL } from 'firebase/storage';
-import { getDoc, onSnapshot, doc, setDoc, serverTimestamp, updateDoc, collection, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { getDocs, getDoc, onSnapshot, doc, 
+    setDoc, serverTimestamp, updateDoc, 
+    collection, arrayUnion, arrayRemove, 
+    query, limit, startAfter } from 'firebase/firestore';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -45,6 +48,7 @@ export const Main = () => {
     const [chatMessages, setChatMessages] = useState([]);
     const [editProfileImage, setEditProfileImage] = useState("");
     const [viewOlderMsg, setViewOlderMsg] = useState(true);
+    const [showLoadUsers, setShowLoadUsers] = useState(true);
     const { theme, themes, setTheme } = useContext(MainContext);
     const dummy = useRef();
     const topDummy = useRef();
@@ -52,7 +56,9 @@ export const Main = () => {
 
     useEffect(() => {
         let userDoc = doc(db,"users",auth.currentUser.uid);
-        let usersDoc = collection(db,"users");
+        
+
+        //Get user data
         onSnapshot(userDoc, snapshot => {
             if(!snapshot.exists()){
                 handleNewUser(userDoc);
@@ -62,11 +68,31 @@ export const Main = () => {
             setEditProfileImage(snapshot.data().avatar);
             setTheme(snapshot.data().isDark ? themes.dark : themes.light);
         })
-        onSnapshot(usersDoc, snapshot => {
-            setUsers(snapshot.docs.filter(d => d.id !== auth.currentUser.uid));
-        })
+
+        //Get list of users limited to 10, exclude the user themselves
+        loadUsers();
+       
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[]);
+
+    const loadUsers = async () => {
+        let usersDoc = query(collection(db,"users"), limit(11));
+        await getDocs(usersDoc).then(snapshot => {
+            setUsers(snapshot.docs.filter(d => d.id !== auth.currentUser.uid));
+        })
+    }
+
+
+    const loadMoreUsers = async () => {
+        const nextBatchUsers = query(collection(db,"users"), limit(11), startAfter(users[users.length - 1]));
+        await getDocs(nextBatchUsers).then(snapshot => {
+            if(snapshot.size > 0){
+                setUsers(users.concat(snapshot.docs.filter(d => d.id !== auth.currentUser.uid)));
+            } else {
+                setShowLoadUsers(false);
+            }
+        })
+    }
 
     //Auto scroll to new messages
     useEffect(() => {
@@ -258,13 +284,16 @@ export const Main = () => {
     }
 
     //Function to handle search
-    const search = e => {
+    const search = async e => {
         e.preventDefault();
+        setShowLoadUsers(undefined)
 
         if(!e.target.searchQuery.value){
-            onSnapshot(collection(db,"users"), snapshot => {
+            await getDocs(query(collection(db,"users"),limit(10)))
+            .then(snapshot => {
                 setUsers(snapshot.docs.filter(d => d.id !== auth.currentUser.uid));
             })
+            setShowLoadUsers(true);
             return;
         }
 
@@ -478,6 +507,14 @@ export const Main = () => {
                             info={user.data()}/>
                         )
                     }) : <div id="no-results"><h3 style={{color:theme.textColor}}>¯\_(ツ)_/¯</h3></div>}
+                    
+                    <div id="load-users">
+                    {users.length && showLoadUsers !== undefined ? 
+                        (showLoadUsers ? 
+                            <Button onClick={loadMoreUsers}>More</Button>
+                        : <h5 style={{color:theme.textColor, padding:"10px"}}>NO MORE USERS</h5>) 
+                    : ""}
+                    </div>
                 </Suspense>
             </div>
 
