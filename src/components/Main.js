@@ -76,7 +76,7 @@ export const Main = () => {
     },[]);
 
     const loadUsers = async () => {
-        let usersDoc = query(collection(db,"users"), limit(11));
+        let usersDoc = query(collection(db,"users"), limit(10));
         await getDocs(usersDoc).then(snapshot => {
             setUsers(snapshot.docs.filter(d => d.id !== auth.currentUser.uid));
         })
@@ -84,12 +84,13 @@ export const Main = () => {
 
 
     const loadMoreUsers = async () => {
-        const nextBatchUsers = query(collection(db,"users"), limit(11), startAfter(users[users.length - 1]));
+        const nextBatchUsers = query(collection(db,"users"), limit(10), startAfter(users[users.length - 1]));
         await getDocs(nextBatchUsers).then(snapshot => {
-            if(snapshot.size > 0){
+            if(snapshot.size > 0 && snapshot.docs[0].id !== auth.currentUser.uid){
                 setUsers(users.concat(snapshot.docs.filter(d => d.id !== auth.currentUser.uid)));
             } else {
                 setShowLoadUsers(false);
+                
             }
         })
     }
